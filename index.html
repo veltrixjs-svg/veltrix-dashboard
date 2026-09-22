@@ -744,15 +744,32 @@ function initMap(points) {
     zoomControl: true
   }).setView([20, 0], 2);
 
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles © Esri',
-    maxZoom: 16
-  }).addTo(currentMap);
+  // Fond 1 : OpenFreeMap (style sombre, gratuit, illimité)
+  const openFreeMap = L.tileLayer('https://tiles.openfreemap.org/styles/dark/{z}/{x}/{y}.png', {
+    attribution: '© OpenFreeMap © OpenStreetMap',
+    maxZoom: 19
+  });
 
+  // Fond 2 : Esri Satellite (gratuit, pas de clé)
+  const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles © Esri',
+    maxZoom: 19
+  });
+
+  // Ajouter le fond par défaut
+  openFreeMap.addTo(currentMap);
+
+  // Contrôle de bascule entre les deux fonds
+  const baseMaps = {
+    "Plan (OpenFreeMap)": openFreeMap,
+    "Satellite (Esri)": esriSatellite
+  };
+  L.control.layers(baseMaps).addTo(currentMap);
+
+  // Le reste de ton code pour les points...
   const pts = Object.values(points);
   if (pts.length === 0) return;
 
-  // Heatmap simple : cercle dont le rayon dépend du nombre de connexions
   const maxCount = Math.max(...pts.map(p => p.count));
   pts.forEach(p => {
     const r = 4 + (p.count / maxCount) * 16;
@@ -767,7 +784,6 @@ function initMap(points) {
     );
   });
 
-  // Ajuster la vue
   const bounds = L.latLngBounds(pts.map(p => [p.lat, p.lon]));
   currentMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 5 });
 }
